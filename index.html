@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="he" dir="rtl" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>משחק רולטות</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Heebo', sans-serif; }
+    
+    .wheel-container {
+      position: relative;
+      width: 280px;
+      height: 280px;
+    }
+    
+    .wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      position: relative;
+      transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+      box-shadow: 0 0 30px rgba(0,0,0,0.3), inset 0 0 20px rgba(255,255,255,0.1);
+    }
+    
+    .wheel-segment {
+      position: absolute;
+      width: 50%;
+      height: 50%;
+      top: 0;
+      right: 50%;
+      transform-origin: bottom right;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      clip-path: polygon(100% 100%, 0 100%, 100% 0);
+    }
+    
+    .wheel-segment span {
+      transform: rotate(22.5deg) translateX(-15px) translateY(25px);
+      font-weight: 900;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+      font-size: 14px !important;
+    }
+    
+    .alphabet-segment span {
+      font-size: 16px !important;
+      font-weight: 900;
+    }
+    
+    .category-segment span {
+      font-size: 11px !important;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    
+    .center-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #ffd700, #ffaa00);
+      border: 4px solid #fff;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      cursor: pointer;
+      font-weight: 900;
+      font-size: 14px;
+      color: #333;
+      transition: all 0.2s;
+      z-index: 10;
+    }
+    
+    .center-btn:hover:not(:disabled) {
+      transform: translate(-50%, -50%) scale(1.1);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    }
+    
+    .center-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .pointer {
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 15px solid transparent;
+      border-right: 15px solid transparent;
+      border-top: 25px solid #ff3366;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+      z-index: 5;
+    }
+    
+    .result-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 20px;
+      padding: 24px;
+      color: white;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+      animation: popIn 0.5s ease-out;
+    }
+    
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    .surprise-card {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      border-radius: 20px;
+      padding: 30px;
+      color: white;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(245, 87, 108, 0.4);
+      animation: shake 0.5s ease-out;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-3deg); }
+      75% { transform: rotate(3deg); }
+    }
+    
+    .step-indicator {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    
+    .step {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      transition: all 0.3s;
+    }
+    
+    .step.active {
+      background: #ffd700;
+      color: #333;
+      transform: scale(1.2);
+    }
+    
+    .step.completed {
+      background: #4ade80;
+      color: white;
+    }
+    
+    .step.pending {
+      background: rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.6);
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 overflow-auto">
+  <div class="w-full min-h-full p-6 flex flex-col items-center">
+   <h1 id="gameTitle" class="text-4xl font-black text-white mb-4 text-center drop-shadow-lg">🎰 משחק הרולטות 🎰</h1>
+   <div class="step-indicator">
+    <div id="step1" class="step active">
+     1
+    </div>
+    <div id="step2" class="step pending">
+     2
+    </div>
+   </div>
+   <p id="instruction" class="text-white text-lg mb-6 text-center">לחצו על רולטת הקטגוריות לבחירה!</p>
+   <div class="flex flex-wrap justify-center gap-8 mb-8"><!-- Category Wheel -->
+    <div class="flex flex-col items-center">
+     <h2 class="text-white text-xl font-bold mb-3">📋 קטגוריות</h2>
+     <div class="wheel-container">
+      <div class="pointer"></div>
+      <div id="categoryWheel" class="wheel"><!-- Segments will be generated by JS -->
+      </div><button id="categoryBtn" class="center-btn active">סובב!</button>
+     </div>
+     <div id="categoryResult" class="mt-4 text-xl font-bold text-yellow-300 h-12 text-center"></div>
+    </div><!-- Alphabet Wheel -->
+    <div class="flex flex-col items-center">
+     <h2 class="text-white text-xl font-bold mb-3">🔤 אותיות</h2>
+     <div class="wheel-container">
+      <div class="pointer"></div>
+      <div id="alphabetWheel" class="wheel"><!-- Segments will be generated by JS -->
+      </div><button id="alphabetBtn" class="center-btn" disabled>סובב!</button>
+     </div>
+     <div id="alphabetResult" class="mt-4 text-3xl font-black text-yellow-300 h-12"></div>
+    </div>
+   </div><!-- Final Result -->
+   <div id="finalResult" class="w-full max-w-md hidden"></div><!-- Reset Button --> <button id="resetBtn" class="hidden mt-6 px-8 py-3 bg-gradient-to-r from-green-400 to-emerald-500 text-white font-bold text-lg rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"> 🔄 משחק חדש </button>
+  </div>
+  <script>
+    const defaultConfig = {
+      game_title: '🎰 משחק הרולטות 🎰'
+    };
+    
+    const hebrewAlphabet = ['א','ב','ג','ד','ה','ו','ז','ח','ט','י','כ','ל','מ','נ','ס','ע','פ','צ','ק','ר','ש','ת'];
+    const categories = [
+      { text: 'ילד/ילדה', icon: '👧' },
+      { text: 'עיר/מדינה', icon: '🌍' },
+      { text: 'מאכל/צומח', icon: '🍎' },
+      { text: 'הפתעה!', icon: '🎁' }
+    ];
+    
+    const surpriseQuestions = [
+      'איך אני מרגיש/ה עכשיו?',
+      'לספר חוויה טובה שהייתה לי השבוע',
+      'מה הכי מעצבן אותי?',
+      'למה אני הכי מתגעגע/ת?',
+      'מה הייתי רוצה שיישאר אותו הדבר?'
+    ];
+    
+    const alphabetColors = [
+      '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD',
+      '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9', '#F8B500', '#FF6B6B',
+      '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8',
+      '#F7DC6F', '#BB8FCE', '#85C1E9', '#F8B500'
+    ];
+    
+    const categoryColors = ['#FF6B6B', '#4ECDC4', '#F7DC6F', '#FF69B4'];
+    
+    let alphabetRotation = 0;
+    let categoryRotation = 0;
+    let selectedLetter = null;
+    let selectedCategory = null;
+    let isSpinning = false;
+    
+    function createAlphabetWheel() {
+      const wheel = document.getElementById('alphabetWheel');
+      const segmentAngle = 360 / hebrewAlphabet.length;
+      
+      wheel.innerHTML = '';
+      
+      hebrewAlphabet.forEach((letter, index) => {
+        const segment = document.createElement('div');
+        segment.className = 'wheel-segment alphabet-segment';
+        segment.style.transform = `rotate(${index * segmentAngle}deg)`;
+        segment.style.backgroundColor = alphabetColors[index % alphabetColors.length];
+        
+        const span = document.createElement('span');
+        span.textContent = letter;
+        span.style.color = '#fff';
+        segment.appendChild(span);
+        
+        wheel.appendChild(segment);
+      });
+    }
+    
+    function createCategoryWheel() {
+      const wheel = document.getElementById('categoryWheel');
+      const segmentAngle = 360 / categories.length;
+      
+      wheel.innerHTML = '';
+      
+      categories.forEach((cat, index) => {
+        const segment = document.createElement('div');
+        segment.className = 'wheel-segment category-segment';
+        segment.style.transform = `rotate(${index * segmentAngle}deg)`;
+        segment.style.backgroundColor = categoryColors[index];
+        segment.style.clipPath = 'polygon(100% 100%, 0 0, 100% 0)';
+        
+        const span = document.createElement('span');
+        span.innerHTML = `${cat.icon}<br>${cat.text}`;
+        span.style.color = '#fff';
+        span.style.textAlign = 'center';
+        span.style.lineHeight = '1.2';
+        span.style.transform = 'rotate(45deg) translateX(-20px) translateY(10px)';
+        segment.appendChild(span);
+        
+        wheel.appendChild(segment);
+      });
+    }
+    
+    function spinCategoryWheel() {
+      if (isSpinning) return;
+      isSpinning = true;
+      
+      const wheel = document.getElementById('categoryWheel');
+      const btn = document.getElementById('categoryBtn');
+      btn.disabled = true;
+      
+      const spins = 5 + Math.random() * 3;
+      const randomAngle = Math.random() * 360;
+      categoryRotation += spins * 360 + randomAngle;
+      
+      wheel.style.transform = `rotate(${categoryRotation}deg)`;
+      
+      setTimeout(() => {
+        const segmentAngle = 360 / categories.length;
+        const normalizedAngle = (360 - (categoryRotation % 360) + 90) % 360;
+        const selectedIndex = Math.floor(normalizedAngle / segmentAngle) % categories.length;
+        selectedCategory = categories[selectedIndex];
+        
+        document.getElementById('categoryResult').textContent = `${selectedCategory.icon} ${selectedCategory.text}`;
+        document.getElementById('step1').classList.remove('active');
+        document.getElementById('step1').classList.add('completed');
+        document.getElementById('step2').classList.remove('pending');
+        document.getElementById('step2').classList.add('active');
+        
+        // אם יצא הפתעה - אין סיבוב של רולטת האותיות
+        if (selectedCategory.text === 'הפתעה!') {
+          document.getElementById('instruction').textContent = 'הגיע תור ההפתעה!';
+          showFinalResult();
+          document.getElementById('resetBtn').classList.remove('hidden');
+        } else {
+          // אחרת - אפשר לסובב את רולטת האותיות
+          document.getElementById('alphabetBtn').disabled = false;
+          document.getElementById('instruction').textContent = 'מעולה! עכשיו לחצו על רולטת האותיות!';
+        }
+        
+        isSpinning = false;
+      }, 4000);
+    }
+    
+    function spinAlphabetWheel() {
+      if (isSpinning) return;
+      isSpinning = true;
+      
+      const wheel = document.getElementById('alphabetWheel');
+      const btn = document.getElementById('alphabetBtn');
+      btn.disabled = true;
+      
+      const spins = 5 + Math.random() * 3;
+      const randomAngle = Math.random() * 360;
+      alphabetRotation += spins * 360 + randomAngle;
+      
+      wheel.style.transform = `rotate(${alphabetRotation}deg)`;
+      
+      setTimeout(() => {
+        const segmentAngle = 360 / hebrewAlphabet.length;
+        const normalizedAngle = (360 - (alphabetRotation % 360) + 90) % 360;
+        const selectedIndex = Math.floor(normalizedAngle / segmentAngle) % hebrewAlphabet.length;
+        selectedLetter = hebrewAlphabet[selectedIndex];
+        
+        document.getElementById('alphabetResult').textContent = `האות: ${selectedLetter}`;
+        document.getElementById('instruction').textContent = 'המשימה שלכם:';
+        
+        showFinalResult();
+        document.getElementById('resetBtn').classList.remove('hidden');
+        
+        isSpinning = false;
+      }, 4000);
+    }
+    
+    function showFinalResult() {
+      const resultDiv = document.getElementById('finalResult');
+      resultDiv.classList.remove('hidden');
+      
+      if (selectedCategory.text === 'הפתעה!') {
+        const randomQuestion = surpriseQuestions[Math.floor(Math.random() * surpriseQuestions.length)];
+        resultDiv.innerHTML = `
+          <div class="surprise-card">
+            <div class="text-5xl mb-4">🎁✨</div>
+            <h3 class="text-2xl font-bold mb-4">שאלת הפתעה!</h3>
+            <p class="text-xl">${randomQuestion}</p>
+          </div>
+        `;
+      } else {
+        resultDiv.innerHTML = `
+          <div class="result-card">
+            <div class="text-5xl mb-4">${selectedCategory.icon}</div>
+            <h3 class="text-2xl font-bold mb-2">המשימה שלכם:</h3>
+            <p class="text-xl">תגידו <span class="text-yellow-300 font-black text-3xl">${selectedCategory.text}</span></p>
+            <p class="text-xl mt-2">שמתחיל/ה באות <span class="text-yellow-300 font-black text-4xl">${selectedLetter}</span></p>
+          </div>
+        `;
+      }
+      
+      document.getElementById('resetBtn').classList.remove('hidden');
+    }
+    
+    function resetGame() {
+      selectedLetter = null;
+      selectedCategory = null;
+      
+      document.getElementById('alphabetResult').textContent = '';
+      document.getElementById('categoryResult').textContent = '';
+      document.getElementById('finalResult').innerHTML = '';
+      document.getElementById('finalResult').classList.add('hidden');
+      document.getElementById('resetBtn').classList.add('hidden');
+      
+      document.getElementById('categoryBtn').disabled = false;
+      document.getElementById('alphabetBtn').disabled = true;
+      
+      document.getElementById('step1').className = 'step active';
+      document.getElementById('step2').className = 'step pending';
+      document.getElementById('instruction').textContent = 'לחצו על רולטת הקטגוריות לבחירה!';
+    }
+    
+    async function onConfigChange(config) {
+      const title = config.game_title || defaultConfig.game_title;
+      document.getElementById('gameTitle').textContent = title;
+    }
+    
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+    
+    function mapToEditPanelValues(config) {
+      return new Map([
+        ['game_title', config.game_title || defaultConfig.game_title]
+      ]);
+    }
+    
+    // Initialize
+    createAlphabetWheel();
+    createCategoryWheel();
+    
+    document.getElementById('categoryBtn').addEventListener('click', spinCategoryWheel);
+    document.getElementById('alphabetBtn').addEventListener('click', spinAlphabetWheel);
+    document.getElementById('resetBtn').addEventListener('click', resetGame);
+    
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d8f0fb5307ae8b9',t:'MTc3Mjk0Mzc3My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

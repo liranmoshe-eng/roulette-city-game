@@ -1,440 +1,739 @@
-<!doctype html>
-<html lang="he" dir="rtl" class="h-full">
- <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>משחק רולטות</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="/_sdk/element_sdk.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&amp;display=swap" rel="stylesheet">
-  <style>
-    * { font-family: 'Heebo', sans-serif; }
-    
-    .wheel-container {
-      position: relative;
-      width: 280px;
-      height: 280px;
-    }
-    
-    .wheel {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      position: relative;
-      transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-      box-shadow: 0 0 30px rgba(0,0,0,0.3), inset 0 0 20px rgba(255,255,255,0.1);
-    }
-    
-    .wheel-segment {
-      position: absolute;
-      width: 50%;
-      height: 50%;
-      top: 0;
-      right: 50%;
-      transform-origin: bottom right;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      clip-path: polygon(100% 100%, 0 100%, 100% 0);
-    }
-    
-    .wheel-segment span {
-      transform: rotate(22.5deg) translateX(-15px) translateY(25px);
-      font-weight: 900;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-      font-size: 14px !important;
-    }
-    
-    .alphabet-segment span {
-      font-size: 16px !important;
-      font-weight: 900;
-    }
-    
-    .category-segment span {
-      font-size: 11px !important;
-      font-weight: 700;
-      line-height: 1.1;
-    }
-    
-    .center-btn {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      background: linear-gradient(145deg, #ffd700, #ffaa00);
-      border: 4px solid #fff;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      cursor: pointer;
-      font-weight: 900;
-      font-size: 14px;
-      color: #333;
-      transition: all 0.2s;
-      z-index: 10;
-    }
-    
-    .center-btn:hover:not(:disabled) {
-      transform: translate(-50%, -50%) scale(1.1);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-    }
-    
-    .center-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    
-    .pointer {
-      position: absolute;
-      top: -15px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left: 15px solid transparent;
-      border-right: 15px solid transparent;
-      border-top: 25px solid #ff3366;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-      z-index: 5;
-    }
-    
-    .result-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 20px;
-      padding: 24px;
-      color: white;
-      text-align: center;
-      box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
-      animation: popIn 0.5s ease-out;
-    }
-    
-    @keyframes popIn {
-      0% { transform: scale(0.8); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    
-    .surprise-card {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      border-radius: 20px;
-      padding: 30px;
-      color: white;
-      text-align: center;
-      box-shadow: 0 10px 40px rgba(245, 87, 108, 0.4);
-      animation: shake 0.5s ease-out;
-    }
-    
-    @keyframes shake {
-      0%, 100% { transform: rotate(0deg); }
-      25% { transform: rotate(-3deg); }
-      75% { transform: rotate(3deg); }
-    }
-    
-    .step-indicator {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    
-    .step {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      transition: all 0.3s;
-    }
-    
-    .step.active {
-      background: #ffd700;
-      color: #333;
-      transform: scale(1.2);
-    }
-    
-    .step.completed {
-      background: #4ade80;
-      color: white;
-    }
-    
-    .step.pending {
-      background: rgba(255,255,255,0.2);
-      color: rgba(255,255,255,0.6);
-    }
-  </style>
-  <style>body { box-sizing: border-box; }</style>
-  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
- </head>
- <body class="h-full bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 overflow-auto">
-  <div class="w-full min-h-full p-6 flex flex-col items-center">
-   <h1 id="gameTitle" class="text-4xl font-black text-white mb-4 text-center drop-shadow-lg">🎰 משחק הרולטות 🎰</h1>
-   <div class="step-indicator">
-    <div id="step1" class="step active">
-     1
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ארץ עיר 0.1 🌍</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Heebo',sans-serif;
+  min-height:100vh;
+  background:#0f0e1a;
+  color:#f0eeff;
+  direction:rtl;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse at 20% 50%,rgba(108,99,255,.25) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 20%,rgba(236,72,153,.2) 0%,transparent 50%),
+    radial-gradient(ellipse at 50% 80%,rgba(52,211,153,.15) 0%,transparent 50%);
+  pointer-events:none;
+}
+
+/* Screens */
+.screen{display:none;position:relative;z-index:1;padding:20px;max-width:900px;margin:0 auto}
+.screen.active{display:block}
+
+/* Setup screen */
+#setup{text-align:center;padding-top:60px}
+#setup h1{
+  font-size:2.6em;font-weight:900;
+  background:linear-gradient(135deg,#a78bfa,#ec4899,#f59e0b);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;margin-bottom:8px;
+}
+#setup p.sub{color:rgba(240,238,255,.55);margin-bottom:30px;font-size:1.1em}
+.player-inputs{max-width:400px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.player-row{display:flex;gap:10px;align-items:center}
+.player-row input{
+  flex:1;padding:12px 16px;border-radius:12px;border:1px solid rgba(108,99,255,.3);
+  background:rgba(26,25,40,.9);color:#f0eeff;font-family:inherit;font-size:1em;
+  outline:none;transition:border-color .2s;
+}
+.player-row input:focus{border-color:#a78bfa}
+.player-row button{
+  width:40px;height:40px;border-radius:50%;border:none;
+  background:rgba(239,68,68,.7);color:#fff;font-size:1.3em;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+#addPlayerBtn{
+  padding:10px 20px;border-radius:12px;border:2px dashed rgba(108,99,255,.4);
+  background:transparent;color:#a78bfa;font-family:inherit;font-size:1em;
+  cursor:pointer;transition:border-color .2s,color .2s;
+}
+#addPlayerBtn:hover{border-color:#a78bfa;color:#fff}
+#startBtn{
+  margin-top:30px;padding:14px 50px;border-radius:16px;border:none;
+  background:linear-gradient(135deg,#6c63ff,#a78bfa);
+  color:#fff;font-size:1.2em;font-weight:700;font-family:inherit;
+  cursor:pointer;transition:transform .2s,box-shadow .2s;
+}
+#startBtn:hover{transform:scale(1.05);box-shadow:0 8px 30px rgba(108,99,255,.4)}
+
+/* Game screen */
+#game{padding-top:20px}
+.top-bar{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:20px;flex-wrap:wrap;gap:10px;
+}
+.current-turn{
+  font-size:1.3em;font-weight:700;
+  background:linear-gradient(135deg,#a78bfa,#ec4899);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.scoreboard{display:flex;gap:10px;flex-wrap:wrap}
+.score-chip{
+  padding:6px 14px;border-radius:20px;
+  background:rgba(26,25,40,.85);border:1px solid rgba(108,99,255,.25);
+  font-size:.9em;white-space:nowrap;
+}
+.score-chip.active{border-color:#a78bfa;background:rgba(108,99,255,.15)}
+
+/* Roulettes area */
+.roulettes{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin-bottom:30px}
+
+/* Roulette */
+.roulette-container{text-align:center}
+.roulette-container h3{margin-bottom:10px;font-weight:600;color:rgba(240,238,255,.7)}
+.roulette-wrapper{position:relative;width:280px;height:280px}
+.roulette-pointer{
+  position:absolute;top:-18px;left:50%;transform:translateX(-50%);
+  width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;
+  border-top:24px solid #f59e0b;z-index:10;filter:drop-shadow(0 2px 6px rgba(245,158,11,.5));
+}
+.roulette-wheel{
+  width:280px;height:280px;border-radius:50%;position:relative;
+  transition:transform 4s cubic-bezier(0.17,0.67,0.12,0.99);
+  border:4px solid rgba(108,99,255,.4);
+  overflow:hidden;
+}
+.roulette-wheel.spinning{pointer-events:none}
+
+.wheel-segment{
+  position:absolute;width:50%;height:50%;
+  transform-origin:100% 100%;
+  display:flex;align-items:center;justify-content:center;
+  clip-path:polygon(0 0, 100% 0, 100% 100%);
+}
+/* We'll draw segments with canvas instead */
+
+canvas.wheel-canvas{
+  width:280px;height:280px;border-radius:50%;cursor:pointer;
+  transition:transform 4s cubic-bezier(0.17,0.67,0.12,0.99);
+}
+canvas.wheel-canvas:hover{filter:brightness(1.05);cursor:pointer}
+.roulette-wrapper{cursor:pointer}
+
+.spin-btn{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:60px;height:60px;border-radius:50%;border:3px solid rgba(255,255,255,.3);
+  background:linear-gradient(135deg,#6c63ff,#a78bfa);
+  color:#fff;font-weight:900;font-size:.75em;font-family:inherit;
+  cursor:pointer;z-index:5;
+  box-shadow:0 4px 20px rgba(108,99,255,.5);
+  transition:transform .2s;
+  display:flex;align-items:center;justify-content:center;
+  text-align:center;line-height:1.1;
+}
+.spin-btn:hover{transform:translate(-50%,-50%) scale(1.1)}
+.spin-btn:disabled{opacity:.5;cursor:not-allowed;transform:translate(-50%,-50%)}
+
+/* Result display */
+.result-area{
+  text-align:center;min-height:200px;
+  background:rgba(26,25,40,.7);border-radius:20px;
+  padding:24px;border:1px solid rgba(108,99,255,.15);
+}
+.result-display{
+  font-size:1.8em;font-weight:700;margin-bottom:6px;
+  min-height:50px;display:flex;align-items:center;justify-content:center;gap:12px;
+}
+.result-letter{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:60px;height:60px;border-radius:16px;
+  background:linear-gradient(135deg,#f59e0b,#f97316);
+  font-size:1.4em;color:#fff;
+}
+.result-category{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:8px 20px;border-radius:16px;
+  background:linear-gradient(135deg,#6c63ff,#a78bfa);
+  font-size:.8em;color:#fff;
+}
+.result-instruction{color:rgba(240,238,255,.55);font-size:1em;margin-bottom:16px}
+
+.answer-area{display:none;margin-top:16px}
+.answer-area input{
+  padding:14px 20px;border-radius:14px;border:1px solid rgba(108,99,255,.3);
+  background:rgba(26,25,40,.9);color:#f0eeff;font-family:inherit;font-size:1.1em;
+  width:100%;max-width:400px;outline:none;text-align:center;
+}
+.answer-area input:focus{border-color:#a78bfa}
+.answer-buttons{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.btn{
+  padding:12px 28px;border-radius:14px;border:none;
+  font-family:inherit;font-size:1em;font-weight:700;cursor:pointer;
+  transition:transform .2s,box-shadow .2s;
+}
+.btn:hover{transform:scale(1.04)}
+.btn-correct{background:linear-gradient(135deg,#10b981,#34d399);color:#fff}
+.btn-wrong{background:linear-gradient(135deg,#ef4444,#f87171);color:#fff}
+.btn-pass{background:rgba(255,255,255,.1);color:rgba(240,238,255,.7);border:1px solid rgba(255,255,255,.15)}
+.btn-submit{background:linear-gradient(135deg,#6c63ff,#a78bfa);color:#fff}
+
+/* Feedback messages */
+.feedback-msg{
+  font-size:1.6em;font-weight:900;margin:20px 0;
+  animation:feedbackPop .5s ease;
+}
+.feedback-msg.correct{color:#34d399}
+.feedback-msg.wrong{color:#f59e0b;font-size:1.3em}
+@keyframes feedbackPop{0%{transform:scale(0);opacity:0}50%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+
+/* Surprise question */
+.surprise-question{
+  font-size:1.3em;font-weight:700;margin:16px 0;
+  color:#f59e0b;
+  animation:pulseText 1.5s ease infinite;
+}
+@keyframes pulseText{0%,100%{opacity:1}50%{opacity:.7}}
+
+/* Confetti */
+.confetti-piece{
+  position:fixed;z-index:9999;pointer-events:none;
+  animation:confettiFall linear forwards;
+}
+@keyframes confettiFall{
+  0%{transform:translateY(-10px) rotate(0deg);opacity:1}
+  100%{transform:translateY(100vh) rotate(720deg);opacity:0}
+}
+
+/* Smiley rain */
+.smiley-drop{
+  position:fixed;z-index:9999;pointer-events:none;font-size:2em;
+  animation:smileyFall linear forwards;
+}
+@keyframes smileyFall{
+  0%{transform:translateY(-40px) scale(1);opacity:1}
+  100%{transform:translateY(100vh) scale(.5);opacity:0}
+}
+
+/* Responsive */
+@media(max-width:650px){
+  .roulettes{gap:20px}
+  .roulette-wrapper{width:220px;height:220px}
+  canvas.wheel-canvas{width:220px;height:220px}
+  .spin-btn{width:50px;height:50px;font-size:.65em}
+  .result-display{font-size:1.3em}
+  #setup h1{font-size:2em}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== SETUP SCREEN ===== -->
+<div id="setup" class="screen active">
+  <h1>🌍 ארץ עיר 0.1</h1>
+  <p class="sub">הכניסו את שמות השחקנים והתחילו לשחק!</p>
+  <div class="player-inputs" id="playerInputs">
+    <div class="player-row">
+      <input type="text" placeholder="שחקן 1" maxlength="20" autofocus>
     </div>
-    <div id="step2" class="step pending">
-     2
+    <div class="player-row">
+      <input type="text" placeholder="שחקן 2" maxlength="20">
     </div>
-   </div>
-   <p id="instruction" class="text-white text-lg mb-6 text-center">לחצו על רולטת הקטגוריות לבחירה!</p>
-   <div class="flex flex-wrap justify-center gap-8 mb-8"><!-- Category Wheel -->
-    <div class="flex flex-col items-center">
-     <h2 class="text-white text-xl font-bold mb-3">📋 קטגוריות</h2>
-     <div class="wheel-container">
-      <div class="pointer"></div>
-      <div id="categoryWheel" class="wheel"><!-- Segments will be generated by JS -->
-      </div><button id="categoryBtn" class="center-btn active">סובב!</button>
-     </div>
-     <div id="categoryResult" class="mt-4 text-xl font-bold text-yellow-300 h-12 text-center"></div>
-    </div><!-- Alphabet Wheel -->
-    <div class="flex flex-col items-center">
-     <h2 class="text-white text-xl font-bold mb-3">🔤 אותיות</h2>
-     <div class="wheel-container">
-      <div class="pointer"></div>
-      <div id="alphabetWheel" class="wheel"><!-- Segments will be generated by JS -->
-      </div><button id="alphabetBtn" class="center-btn" disabled>סובב!</button>
-     </div>
-     <div id="alphabetResult" class="mt-4 text-3xl font-black text-yellow-300 h-12"></div>
-    </div>
-   </div><!-- Final Result -->
-   <div id="finalResult" class="w-full max-w-md hidden"></div><!-- Reset Button --> <button id="resetBtn" class="hidden mt-6 px-8 py-3 bg-gradient-to-r from-green-400 to-emerald-500 text-white font-bold text-lg rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"> 🔄 משחק חדש </button>
   </div>
-  <script>
-    const defaultConfig = {
-      game_title: '🎰 משחק הרולטות 🎰'
-    };
-    
-    const hebrewAlphabet = ['א','ב','ג','ד','ה','ו','ז','ח','ט','י','כ','ל','מ','נ','ס','ע','פ','צ','ק','ר','ש','ת'];
-    const categories = [
-      { text: 'ילד/ילדה', icon: '👧' },
-      { text: 'עיר/מדינה', icon: '🌍' },
-      { text: 'מאכל/צומח', icon: '🍎' },
-      { text: 'הפתעה!', icon: '🎁' }
-    ];
-    
-    const surpriseQuestions = [
-      'איך אני מרגיש/ה עכשיו?',
-      'לספר חוויה טובה שהייתה לי השבוע',
-      'מה הכי מעצבן אותי?',
-      'למה אני הכי מתגעגע/ת?',
-      'מה הייתי רוצה שיישאר אותו הדבר?'
-    ];
-    
-    const alphabetColors = [
-      '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD',
-      '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9', '#F8B500', '#FF6B6B',
-      '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8',
-      '#F7DC6F', '#BB8FCE', '#85C1E9', '#F8B500'
-    ];
-    
-    const categoryColors = ['#FF6B6B', '#4ECDC4', '#F7DC6F', '#FF69B4'];
-    
-    let alphabetRotation = 0;
-    let categoryRotation = 0;
-    let selectedLetter = null;
-    let selectedCategory = null;
-    let isSpinning = false;
-    
-    function createAlphabetWheel() {
-      const wheel = document.getElementById('alphabetWheel');
-      const segmentAngle = 360 / hebrewAlphabet.length;
-      
-      wheel.innerHTML = '';
-      
-      hebrewAlphabet.forEach((letter, index) => {
-        const segment = document.createElement('div');
-        segment.className = 'wheel-segment alphabet-segment';
-        segment.style.transform = `rotate(${index * segmentAngle}deg)`;
-        segment.style.backgroundColor = alphabetColors[index % alphabetColors.length];
-        
-        const span = document.createElement('span');
-        span.textContent = letter;
-        span.style.color = '#fff';
-        segment.appendChild(span);
-        
-        wheel.appendChild(segment);
-      });
-    }
-    
-    function createCategoryWheel() {
-      const wheel = document.getElementById('categoryWheel');
-      const segmentAngle = 360 / categories.length;
-      
-      wheel.innerHTML = '';
-      
-      categories.forEach((cat, index) => {
-        const segment = document.createElement('div');
-        segment.className = 'wheel-segment category-segment';
-        segment.style.transform = `rotate(${index * segmentAngle}deg)`;
-        segment.style.backgroundColor = categoryColors[index];
-        segment.style.clipPath = 'polygon(100% 100%, 0 0, 100% 0)';
-        
-        const span = document.createElement('span');
-        span.innerHTML = `${cat.icon}<br>${cat.text}`;
-        span.style.color = '#fff';
-        span.style.textAlign = 'center';
-        span.style.lineHeight = '1.2';
-        span.style.transform = 'rotate(45deg) translateX(-20px) translateY(10px)';
-        segment.appendChild(span);
-        
-        wheel.appendChild(segment);
-      });
-    }
-    
-    function spinCategoryWheel() {
-      if (isSpinning) return;
-      isSpinning = true;
-      
-      const wheel = document.getElementById('categoryWheel');
-      const btn = document.getElementById('categoryBtn');
-      btn.disabled = true;
-      
-      const spins = 5 + Math.random() * 3;
-      const randomAngle = Math.random() * 360;
-      categoryRotation += spins * 360 + randomAngle;
-      
-      wheel.style.transform = `rotate(${categoryRotation}deg)`;
-      
-      setTimeout(() => {
-        const segmentAngle = 360 / categories.length;
-        const normalizedAngle = (360 - (categoryRotation % 360) + 90) % 360;
-        const selectedIndex = Math.floor(normalizedAngle / segmentAngle) % categories.length;
-        selectedCategory = categories[selectedIndex];
-        
-        document.getElementById('categoryResult').textContent = `${selectedCategory.icon} ${selectedCategory.text}`;
-        document.getElementById('step1').classList.remove('active');
-        document.getElementById('step1').classList.add('completed');
-        document.getElementById('step2').classList.remove('pending');
-        document.getElementById('step2').classList.add('active');
-        
-        // אם יצא הפתעה - אין סיבוב של רולטת האותיות
-        if (selectedCategory.text === 'הפתעה!') {
-          document.getElementById('instruction').textContent = 'הגיע תור ההפתעה!';
-          showFinalResult();
-          document.getElementById('resetBtn').classList.remove('hidden');
-        } else {
-          // אחרת - אפשר לסובב את רולטת האותיות
-          document.getElementById('alphabetBtn').disabled = false;
-          document.getElementById('instruction').textContent = 'מעולה! עכשיו לחצו על רולטת האותיות!';
-        }
-        
-        isSpinning = false;
-      }, 4000);
-    }
-    
-    function spinAlphabetWheel() {
-      if (isSpinning) return;
-      isSpinning = true;
-      
-      const wheel = document.getElementById('alphabetWheel');
-      const btn = document.getElementById('alphabetBtn');
-      btn.disabled = true;
-      
-      const spins = 5 + Math.random() * 3;
-      const randomAngle = Math.random() * 360;
-      alphabetRotation += spins * 360 + randomAngle;
-      
-      wheel.style.transform = `rotate(${alphabetRotation}deg)`;
-      
-      setTimeout(() => {
-        const segmentAngle = 360 / hebrewAlphabet.length;
-        const normalizedAngle = (360 - (alphabetRotation % 360) + 90) % 360;
-        const selectedIndex = Math.floor(normalizedAngle / segmentAngle) % hebrewAlphabet.length;
-        selectedLetter = hebrewAlphabet[selectedIndex];
-        
-        document.getElementById('alphabetResult').textContent = `האות: ${selectedLetter}`;
-        document.getElementById('instruction').textContent = 'המשימה שלכם:';
-        
-        showFinalResult();
-        document.getElementById('resetBtn').classList.remove('hidden');
-        
-        isSpinning = false;
-      }, 4000);
-    }
-    
-    function showFinalResult() {
-      const resultDiv = document.getElementById('finalResult');
-      resultDiv.classList.remove('hidden');
-      
-      if (selectedCategory.text === 'הפתעה!') {
-        const randomQuestion = surpriseQuestions[Math.floor(Math.random() * surpriseQuestions.length)];
-        resultDiv.innerHTML = `
-          <div class="surprise-card">
-            <div class="text-5xl mb-4">🎁✨</div>
-            <h3 class="text-2xl font-bold mb-4">שאלת הפתעה!</h3>
-            <p class="text-xl">${randomQuestion}</p>
-          </div>
-        `;
-      } else {
-        resultDiv.innerHTML = `
-          <div class="result-card">
-            <div class="text-5xl mb-4">${selectedCategory.icon}</div>
-            <h3 class="text-2xl font-bold mb-2">המשימה שלכם:</h3>
-            <p class="text-xl">תגידו <span class="text-yellow-300 font-black text-3xl">${selectedCategory.text}</span></p>
-            <p class="text-xl mt-2">שמתחיל/ה באות <span class="text-yellow-300 font-black text-4xl">${selectedLetter}</span></p>
-          </div>
-        `;
-      }
-      
-      document.getElementById('resetBtn').classList.remove('hidden');
-    }
-    
-    function resetGame() {
-      selectedLetter = null;
-      selectedCategory = null;
-      
-      document.getElementById('alphabetResult').textContent = '';
-      document.getElementById('categoryResult').textContent = '';
-      document.getElementById('finalResult').innerHTML = '';
-      document.getElementById('finalResult').classList.add('hidden');
-      document.getElementById('resetBtn').classList.add('hidden');
-      
-      document.getElementById('categoryBtn').disabled = false;
-      document.getElementById('alphabetBtn').disabled = true;
-      
-      document.getElementById('step1').className = 'step active';
-      document.getElementById('step2').className = 'step pending';
-      document.getElementById('instruction').textContent = 'לחצו על רולטת הקטגוריות לבחירה!';
-    }
-    
-    async function onConfigChange(config) {
-      const title = config.game_title || defaultConfig.game_title;
-      document.getElementById('gameTitle').textContent = title;
-    }
-    
-    function mapToCapabilities(config) {
-      return {
-        recolorables: [],
-        borderables: [],
-        fontEditable: undefined,
-        fontSizeable: undefined
-      };
-    }
-    
-    function mapToEditPanelValues(config) {
-      return new Map([
-        ['game_title', config.game_title || defaultConfig.game_title]
-      ]);
-    }
-    
-    // Initialize
-    createAlphabetWheel();
-    createCategoryWheel();
-    
-    document.getElementById('categoryBtn').addEventListener('click', spinCategoryWheel);
-    document.getElementById('alphabetBtn').addEventListener('click', spinAlphabetWheel);
-    document.getElementById('resetBtn').addEventListener('click', resetGame);
-    
-    if (window.elementSdk) {
-      window.elementSdk.init({
-        defaultConfig,
-        onConfigChange,
-        mapToCapabilities,
-        mapToEditPanelValues
-      });
-    }
-  </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d8f0fb5307ae8b9',t:'MTc3Mjk0Mzc3My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+  <br>
+  <button id="addPlayerBtn" onclick="addPlayer()">+ הוסף שחקן</button>
+  <br>
+  <button id="startBtn" onclick="startGame()">🎮 התחילו לשחק!</button>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div id="game" class="screen">
+  <div class="top-bar">
+    <div class="current-turn" id="turnDisplay"></div>
+    <div class="scoreboard" id="scoreboard"></div>
+  </div>
+
+  <div class="roulettes">
+    <!-- Roulette 1: Categories -->
+    <div class="roulette-container">
+      <h3>קטגוריה</h3>
+      <div class="roulette-wrapper">
+        <div class="roulette-pointer"></div>
+        <canvas id="categoryWheel" class="wheel-canvas" width="560" height="560" onclick="spinCategory()"></canvas>
+        <button class="spin-btn" id="spinCatBtn" onclick="spinCategory()">סובב!</button>
+      </div>
+    </div>
+    <!-- Roulette 2: Letters -->
+    <div class="roulette-container">
+      <h3>אות</h3>
+      <div class="roulette-wrapper">
+        <div class="roulette-pointer"></div>
+        <canvas id="letterWheel" class="wheel-canvas" width="560" height="560" onclick="spinLetter()"></canvas>
+        <button class="spin-btn" id="spinLetBtn" onclick="spinLetter()">סובב!</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="result-area" id="resultArea">
+    <div class="result-display" id="resultDisplay">
+      <span style="color:rgba(240,238,255,.4)">סובבו את שתי הרולטות!</span>
+    </div>
+    <div class="result-instruction" id="resultInstruction"></div>
+    <div class="answer-area" id="answerArea">
+      <input type="text" id="answerInput" placeholder="כתבו את התשובה..." autocomplete="off">
+      <div class="answer-buttons" id="answerButtons">
+        <!-- buttons inserted dynamically -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+const categories = ['ארץ/עיר', 'ילד/ילדה', 'צומח', 'דומם', 'משהו מפתיע'];
+const catColors = ['#6c63ff','#10b981','#34d399','#f59e0b','#ef4444'];
+
+const hebrewLetters = ['א','ב','ג','ד','ה','ו','ז','ח','ט','י','כ','ל','מ','נ','ס','ע','פ','צ','ק','ר','ש','ת'];
+const letterColors = ['#f59e0b','#f97316','#ef4444','#ec4899','#a78bfa','#6c63ff','#3b82f6','#06b6d4','#10b981','#34d399','#f59e0b','#f97316','#ef4444','#ec4899','#a78bfa','#6c63ff','#3b82f6','#06b6d4','#10b981','#34d399','#f59e0b','#f97316'];
+
+const surpriseQuestions = [
+  'אם הייתי חיה ליום אחד, מה הייתי?',
+  'יש לי חלום...',
+  'מה הדבר הכי מוזר שהיית מוכן לאכול בשביל מיליון דולר?',
+  'אם היה לך כוח-על, מה היית בוחר?',
+  'משהו מצחיק שפעם קרה לך'
+];
+
+// ===== ANSWER DATABASE =====
+const answerDB = {
+  'ארץ/עיר': [
+    'אנגליה','אוסטרליה','אוסטריה','אירלנד','איראן','אלבניה','ארגנטינה','אקוודור','אתיופיה','אוגנדה',
+    'אפגניסטן','אורוגוואי','אנדורה','אנגולה','איטליה','אינדונזיה','איסלנד','אזרבייגן','אריתריאה',
+    'אשדוד','אשקלון','אילת','אופקים','אריאל','אמסטרדם','אתונה','אנקרה','אוסלו','אלג\'יר','אלג\'יריה',
+    'בלגיה','ברזיל','בוליביה','בולגריה','בחריין','בנגלדש','בורקינה פאסו','בוטסוואנה','בלארוס','בנין',
+    'באר שבע','בית שמש','בני ברק','בת ים','ביתר עילית','בנגקוק','ברלין','בודפשט','ברצלונה','ביירות','בגדאד','בוסטון','בלפסט','ברן','בייג\'ינג',
+    'גרמניה','גאנה','גינאה','גואטמלה','גמביה','גאורגיה','גרינלנד','גיברלטר','גבעתיים','גדרה','גני תקווה',
+    'דנמרק','דרום אפריקה','דובאי','דימונה','דלהי','דבלין',
+    'הודו','הולנד','הונגריה','הונדורס','האיטי','הרצליה','הוד השרון','הלסינקי','האג','המבורג','הונולולו','הונג קונג',
+    'ונצואלה','וייטנאם','ורשה','ונציה','וושינגטון','ויינה',
+    'זימבבואה','זמביה','זנזיבר','זכרון יעקב','זאגרב','ז\'נבה',
+    'חיפה','חולון','חדרה','חריש',
+    'טורקיה','טייוואן','טנזניה','טוניסיה','טוניס','טבריה','טירת כרמל','טוקיו','טורונטו','טביליסי',
+    'יוון','יפן','ירדן','ימן','ירושלים','יפו','יבנה','יוקנעם','ירוחם','יהוד',
+    'כווית','כרתים','כפר סבא','כרמיאל','כפר יונה','כנרת',
+    'לבנון','לוב','ליביה','לאוס','לטביה','ליטא','לוקסמבורג','לוד','לונדון','ליסבון','לימה','ליון','לאס וגאס',
+    'מצרים','מרוקו','מקסיקו','מלזיה','מונגוליה','מוזמביק','מלטה','מולדובה','מאוריטניה','מיאנמר','מלאווי','מאלי','מדגסקר','מונקו','מקדוניה',
+    'מודיעין','מגדל העמק','מעלות','מעלה אדומים','מוסקבה','מדריד','מילאנו','מנצ\'סטר','מלבורן','מומבאי','מיאמי','מינכן',
+    'נורבגיה','ניגריה','ניו זילנד','ניקרגואה','נמיביה','נפאל','ניז\'ר','נתניה','נצרת','נהריה','נס ציונה','ניו יורק','ניס',
+    'סין','סוריה','סודן','סומליה','ספרד','סנגל','סרביה','סלובניה','סלובקיה','סיירה לאונה','סרי לנקה','סינגפור','סדרות','סטוקהולם','סידני','סאו פאולו','סן פרנסיסקו',
+    'עיראק','עומאן','עכו','עפולה','עראבה','עמאן',
+    'פולין','פרו','פנמה','פרגוואי','פקיסטן','פיליפינים','פינלנד','פורטוגל','פתח תקווה','פריז','פראג','פלורנס',
+    'צרפת','צ\'כיה','צ\'ילה','צ\'אד','צפת','ציריך',
+    'קנדה','קולומביה','קוסטה ריקה','קובה','קניה','קטאר','קמרון','קונגו','קזחסטן','קירגיזסטן',
+    'קריית שמונה','קריית גת','קריית אתא','קריית ביאליק','קריית מוצקין','קהיר','קופנהגן','קייב',
+    'רוסיה','רומניה','רואנדה','ראשון לציון','רמת גן','רמלה','רהט','רעננה','רמת השרון','רומא','ריו דה ז\'ניירו','ריגה',
+    'שבדיה','שוויץ','שווייץ','שדרות','שפרעם','שנחאי','שיקגו',
+    'תאילנד','תוניסיה','תל אביב','תל אביב יפו'
+  ],
+  'ילד/ילדה': [
+    'אבי','אביגיל','אביב','אביה','אביטל','אברהם','אגם','אדם','אדר','אהוד','אהרון','אור','אורי','אוריה','אורית','אורלי','אושר',
+    'איילה','אילון','אילנה','אילן','אלה','אלון','אלי','אליהו','אלישבע','אלישע','אלמוג','אמיר','אמירה','אנה','אפרת','ארבל','אריאל','אריאלה','ארנון','אשר','אסתר','אסף',
+    'בועז','בר','ברוך','ברק','בת אל','בתיה','בן','בנימין','ברכה','בילה',
+    'גד','גיא','גיל','גילה','גילי','גילת','גלי','גלית','גל','גפן',
+    'דבורה','דוד','דורון','דורית','דין','דינה','דלית','דנה','דניאל','דניאלה','דפנה','דרור',
+    'הגר','הדס','הדסה','הילה','הלל','הראל','הדר',
+    'ורד','ורדה',
+    'זאב','זהבה','זוהר','זיו',
+    'חגי','חגית','חוה','חיים','חנה','חני','חנוך','חמוטל',
+    'טל','טלי','טליה','טובה',
+    'יאיר','יגאל','יהב','יהודה','יהודית','יהונתן','יהושע','יהל','יואב','יואל','יובל','יוכבד','יוני','יונתן','יוסי','יוסף','יורם',
+    'ינאי','ינון','יעל','יעקב','יפה','יפית','יפעת','יצחק','ירדן','ירון','ישי','ישראל','יפתח',
+    'כוכבית','כליל','כנרת','כפיר','כרם','כרמי','כרמית','כרמל',
+    'לאה','לב','לביא','להב','ליאור','ליאל','ליאם','ליאן','ליאת','ליהי','לילך','לימור','לין','ליעד','לירון','לירז',
+    'מאור','מאיה','מאיר','מגל','מור','מוריה','מיה','מיטב','מיכאל','מיכל','מירב','מירי','משה','מתן','מתנאל',
+    'נאוה','נאור','נגה','נדב','נהוראי','נוגה','נועה','נועם','נורית','ניב','ניסן','ניצן','נעמי','נפתלי','נתן','נתנאל',
+    'סהר','סיגל','סיגלית','סיון','סמדר','סער',
+    'עדי','עדן','עדנה','עובד','עודד','עוז','עופר','עופרה','עליזה','עמוס','עמי','עמיחי','עמית','ענבל','ענבר','ענת','עפרה',
+    'פנחס','פנינה','פרח',
+    'צבי','צביה','ציון','ציפי','ציפורה',
+    'קרן','קרין',
+    'רביד','רבקה','רון','רוני','רונית','רותם','רות','רועי','רז','רחל','ריקי','רינת','רם','רמי','רעות',
+    'שאול','שגיא','שגית','שובל','שון','שושנה','שחף','שחר','שי','שיר','שירה','שלומי','שלומית','שלמה','שמואל','שמחה','שני','שנהב','שקד','שרה','שרון','שרית',
+    'תאיר','תהילה','תומר','תמיר','תמר','תמרה'
+  ],
+  'צומח': [
+    'אבוקדו','אבטיח','אגוז','אגס','אורן','אורז','אזדרכת','אירוס','אלון','אננס','אפרסק','אפרסמון','אקליפטוס','אשכולית','אתרוג',
+    'בננה','בזיליקום','בטטה','בצל','ברוש',
+    'גזר','גפן',
+    'דולב','דקל','דובדבן','דלעת',
+    'הדס','הדר',
+    'ורד',
+    'זית',
+    'חציל','חבצלת','חיטה','חרצית','חסה','חמנייה','חבוש',
+    'טבק',
+    'יסמין',
+    'כותנה','כלנית','כרוב','כרפס','כרכום',
+    'לוטוס','לילך','לימון','לבונה','ליצ\'י','לפת',
+    'מלון','מלפפון','מנגו','מרווה','מישמש','מנדרינה','מנטה',
+    'נרקיס','נענע','נקטרינה',
+    'סחלב','סלק',
+    'עגבנייה','עגבניה','ענב',
+    'פטרוזיליה','פטל','פיסטוק','פלפל','פפאיה','פסיפלורה','פרג',
+    'צבר','צנון','צנונית',
+    'קישוא','קלמנטינה','קמומיל','קינמון',
+    'רוזמרין','רימון','רקפת',
+    'שום','שושנה','שיזף','שעורה','שסק','שקד','שזיף',
+    'תאנה','תות','תמר','תפוח','תפוז','תירס'
+  ],
+  'דומם': [
+    'אבן','אגרטל','אופניים','אופנוע','אוטובוס','אוהל','אלבום','אמבטיה','אנטנה','ארון','ארנק',
+    'בקבוק','ברז','בגד','בית','בלון','בריכה','בול',
+    'גלגל','גביע','גדר','גיטרה','גומייה','גרב','גשר',
+    'דלי','דלת','דף','דביק','דגל','דירה',
+    'הגה',
+    'וילון',
+    'זכוכית',
+    'חלון','חדר','חוט','חולצה','חצאית','חבל','חרב',
+    'טלפון','טלוויזיה','טבעת',
+    'יהלום',
+    'כדור','כובע','כיסא','כלי','כנור','כף','כפית','כרית','כתר',
+    'לוח','לבנה','לחם',
+    'מחשב','מגבת','מגהץ','מגירה','מגנט','מדבקה','מזגן','מזלג','מזוודה','מחברת','מיטה','מכונית','מכנסיים','מנורה','מנעול',
+    'מעטפה','מעלית','מפה','מפתח','מצלמה','מקלדת','מראה','מרפסת','משחק','משקפיים',
+    'נייר','נעל','נר',
+    'סכין','סיר','סירה','ספה','ספר','סרגל','סוכריה','סוללה','סולם',
+    'עגלה','עט','עיפרון','עפרון','עיתון','עניבה','ענן','עריסה',
+    'פטיש','פח','פנס','פסנתר','פרח',
+    'צבע','צינור','צלחת','צמיד','צעיף',
+    'קופסה','קיר','קערה','קרח','קרש','קשת',
+    'רדיו','רכב','רובוט','רהיט',
+    'שולחן','שטיח','שלט','שמיכה','שעון','שקית',
+    'תיק','תמונה','תנור','תריס'
+  ]
+};
+
+// Build a Set for fast lookup (normalized: trimmed, no extra spaces)
+const answerSets = {};
+for (const cat in answerDB) {
+  answerSets[cat] = new Set(answerDB[cat].map(a => a.trim()));
+}
+
+// ===== STATE =====
+let players = [];
+let scores = [];
+let currentPlayer = 0;
+let selectedCategory = null;
+let selectedLetter = null;
+let catAngle = 0;
+let letAngle = 0;
+let catSpinning = false;
+let letSpinning = false;
+let isSurprise = false;
+
+// ===== SETUP =====
+function addPlayer() {
+  const container = document.getElementById('playerInputs');
+  const count = container.children.length + 1;
+  const row = document.createElement('div');
+  row.className = 'player-row';
+  row.innerHTML = `<input type="text" placeholder="שחקן ${count}" maxlength="20"><button onclick="removePlayer(this)">✕</button>`;
+  container.appendChild(row);
+}
+
+function removePlayer(btn) {
+  const container = document.getElementById('playerInputs');
+  if (container.children.length > 2) {
+    btn.parentElement.remove();
+  }
+}
+
+function startGame() {
+  const inputs = document.querySelectorAll('#playerInputs input');
+  players = [];
+  inputs.forEach((inp, i) => {
+    const name = inp.value.trim() || `שחקן ${i+1}`;
+    players.push(name);
+  });
+  if (players.length < 2) return;
+  scores = players.map(() => 0);
+  currentPlayer = 0;
+
+  document.getElementById('setup').classList.remove('active');
+  document.getElementById('game').classList.add('active');
+
+  drawWheel('categoryWheel', categories, catColors);
+  drawWheel('letterWheel', hebrewLetters, letterColors);
+  updateUI();
+}
+
+// ===== DRAW WHEEL =====
+function drawWheel(canvasId, items, colors) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const cx = canvas.width / 2, cy = canvas.height / 2, r = cx - 4;
+  const n = items.length;
+  const arc = 2 * Math.PI / n;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < n; i++) {
+    const startAngle = i * arc - Math.PI / 2;
+    const endAngle = startAngle + arc;
+
+    // segment
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.15)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // text
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(startAngle + arc / 2);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold ' + (n > 10 ? '20px' : '26px') + ' Heebo';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(items[i], r * 0.6, 0);
+    ctx.restore();
+  }
+
+  // center circle
+  ctx.beginPath();
+  ctx.arc(cx, cy, 38, 0, 2 * Math.PI);
+  ctx.fillStyle = '#1a1928';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(108,99,255,.5)';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+}
+
+// ===== SPIN =====
+function spinWheel(canvasId, items, currentAngle, callback) {
+  const canvas = document.getElementById(canvasId);
+  const n = items.length;
+  const extraSpins = 5 + Math.random() * 5;
+  const randomStop = Math.random() * 360;
+  const totalRotation = extraSpins * 360 + randomStop;
+  const newAngle = currentAngle + totalRotation;
+
+  canvas.style.transition = 'transform 4s cubic-bezier(0.17,0.67,0.12,0.99)';
+  canvas.style.transform = `rotate(${newAngle}deg)`;
+
+  // figure out which segment the pointer (at top) lands on
+  setTimeout(() => {
+    const normalizedAngle = newAngle % 360;
+    const segmentSize = 360 / n;
+    // pointer is at top (270 deg in math coords = 0 in visual)
+    // the wheel rotates clockwise, so segment at top:
+    const idx = Math.floor(((360 - normalizedAngle % 360) % 360) / segmentSize);
+    callback(items[idx], newAngle);
+  }, 4200);
+
+  return newAngle;
+}
+
+function spinCategory() {
+  if (catSpinning) return;
+  catSpinning = true;
+  selectedCategory = null;
+  document.getElementById('spinCatBtn').disabled = true;
+  updateResultDisplay();
+
+  catAngle = spinWheel('categoryWheel', categories, catAngle, (result, angle) => {
+    catAngle = angle;
+    selectedCategory = result;
+    catSpinning = false;
+    document.getElementById('spinCatBtn').disabled = false;
+    isSurprise = (selectedCategory === 'משהו מפתיע');
+    checkBothSpun();
+  });
+}
+
+function spinLetter() {
+  if (letSpinning) return;
+  letSpinning = true;
+  selectedLetter = null;
+  document.getElementById('spinLetBtn').disabled = true;
+  updateResultDisplay();
+
+  letAngle = spinWheel('letterWheel', hebrewLetters, letAngle, (result, angle) => {
+    letAngle = angle;
+    selectedLetter = result;
+    letSpinning = false;
+    document.getElementById('spinLetBtn').disabled = false;
+    checkBothSpun();
+  });
+}
+
+function checkBothSpun() {
+  updateResultDisplay();
+  if (selectedCategory !== null && selectedLetter !== null) {
+    showAnswerArea();
+  }
+}
+
+function updateResultDisplay() {
+  const rd = document.getElementById('resultDisplay');
+  let html = '';
+  if (selectedCategory) {
+    html += `<span class="result-category">${selectedCategory}</span>`;
+  }
+  if (selectedLetter) {
+    html += `<span class="result-letter">${selectedLetter}</span>`;
+  }
+  if (!selectedCategory && !selectedLetter) {
+    html = '<span style="color:rgba(240,238,255,.4)">סובבו את שתי הרולטות!</span>';
+  }
+  rd.innerHTML = html;
+}
+
+function showAnswerArea() {
+  const area = document.getElementById('answerArea');
+  const inst = document.getElementById('resultInstruction');
+  const btns = document.getElementById('answerButtons');
+  const input = document.getElementById('answerInput');
+  area.style.display = 'block';
+  input.value = '';
+
+  if (isSurprise) {
+    const q = surpriseQuestions[Math.floor(Math.random() * surpriseQuestions.length)];
+    inst.innerHTML = `<div class="surprise-question">🎉 שאלת הפתעה: ${q}</div>`;
+    input.placeholder = 'כתבו את התשובה שלכם...';
+    btns.innerHTML = `
+      <button class="btn btn-submit" onclick="submitSurprise()">✨ קבל תשובה</button>
+    `;
+  } else {
+    inst.textContent = `כתבו ${selectedCategory} שמתחיל/ה באות ${selectedLetter}`;
+    input.placeholder = `${selectedCategory} באות ${selectedLetter}...`;
+    btns.innerHTML = `
+      <button class="btn btn-submit" onclick="checkAnswer()">🔍 בדוק תשובה</button>
+    `;
+  }
+  input.focus();
+}
+
+// ===== ANSWERS =====
+// Map final-form letters to their normal form for comparison
+const finalToNormal = {'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'};
+function normalizeHebrew(ch) {
+  return finalToNormal[ch] || ch;
+}
+
+function checkAnswer() {
+  const answer = document.getElementById('answerInput').value.trim();
+  if (!answer) { document.getElementById('answerInput').focus(); return; }
+
+  const firstChar = normalizeHebrew(answer.charAt(0));
+  const targetLetter = normalizeHebrew(selectedLetter);
+
+  // Check 1: first letter must match
+  if (firstChar !== targetLetter) {
+    showFeedback(false, `התשובה צריכה להתחיל באות ${selectedLetter}`);
+    return;
+  }
+
+  // Check 2: answer must be in the category database
+  const set = answerSets[selectedCategory];
+  if (set && set.has(answer)) {
+    scores[currentPlayer]++;
+    showFeedback(true);
+    fireConfetti();
+    fireSmileyRain();
+  } else {
+    showFeedback(false, `"${answer}" לא נמצא במאגר של ${selectedCategory}`);
+  }
+}
+
+function showFeedback(isCorrect, detail) {
+  const inst = document.getElementById('resultInstruction');
+  const ansArea = document.getElementById('answerArea');
+  ansArea.style.display = 'none';
+  if (isCorrect) {
+    inst.innerHTML = '<div class="feedback-msg correct">🎉 כל הכבוד! 🎉</div>';
+  } else {
+    const detailHtml = detail ? `<br><span style="font-size:.7em;color:rgba(240,238,255,.55)">${detail}</span>` : '';
+    inst.innerHTML = `<div class="feedback-msg wrong">💪 לא נורא, כל יום לומדים דברים חדשים!${detailHtml}</div>`;
+  }
+  setTimeout(() => nextTurn(), 3000);
+}
+
+function submitSurprise() {
+  const answer = document.getElementById('answerInput').value.trim();
+  if (!answer) { document.getElementById('answerInput').focus(); return; }
+  scores[currentPlayer]++;
+  showFeedback(true);
+  fireConfetti();
+  fireSmileyRain();
+}
+
+function passTurn() {
+  nextTurn();
+}
+
+function nextTurn() {
+  selectedCategory = null;
+  selectedLetter = null;
+  isSurprise = false;
+  currentPlayer = (currentPlayer + 1) % players.length;
+  document.getElementById('answerArea').style.display = 'none';
+  document.getElementById('resultInstruction').textContent = '';
+  updateResultDisplay();
+  updateUI();
+}
+
+function updateUI() {
+  document.getElementById('turnDisplay').textContent = `🎯 התור של: ${players[currentPlayer]}`;
+  const sb = document.getElementById('scoreboard');
+  sb.innerHTML = players.map((p, i) =>
+    `<div class="score-chip ${i === currentPlayer ? 'active' : ''}">${p}: ${scores[i]}</div>`
+  ).join('');
+}
+
+// ===== CONFETTI =====
+function fireConfetti() {
+  const colors = ['#6c63ff','#ec4899','#f59e0b','#10b981','#3b82f6','#ef4444','#a78bfa','#34d399'];
+  for (let i = 0; i < 80; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.top = '-10px';
+    el.style.width = (6 + Math.random() * 8) + 'px';
+    el.style.height = (6 + Math.random() * 8) + 'px';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    el.style.animationDuration = (2 + Math.random() * 3) + 's';
+    el.style.animationDelay = (Math.random() * 1.5) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 5000);
+  }
+}
+
+function fireSmileyRain() {
+  const smileys = ['😄','😊','🥳','😎','🤩','😁','🎉','✨','💫','⭐'];
+  for (let i = 0; i < 30; i++) {
+    const el = document.createElement('div');
+    el.className = 'smiley-drop';
+    el.textContent = smileys[Math.floor(Math.random() * smileys.length)];
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.top = '-40px';
+    el.style.animationDuration = (2 + Math.random() * 3) + 's';
+    el.style.animationDelay = (Math.random() * 2) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 6000);
+  }
+}
+
+// Enter key submits answer
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('answerArea').style.display === 'block') {
+    if (isSurprise) submitSurprise();
+    else checkAnswer();
+  }
+});
+</script>
+</body>
 </html>

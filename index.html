@@ -70,6 +70,7 @@ body::before{
   display:flex;justify-content:space-between;align-items:center;
   margin-bottom:20px;flex-wrap:wrap;gap:10px;
 }
+.top-bar-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .current-turn{
   font-size:1.3em;font-weight:700;
   background:linear-gradient(135deg,#a78bfa,#ec4899);
@@ -81,8 +82,76 @@ body::before{
   padding:6px 14px;border-radius:20px;
   background:rgba(26,25,40,.85);border:1px solid rgba(108,99,255,.25);
   font-size:.9em;white-space:nowrap;
+  transition:transform .2s,border-color .2s,box-shadow .2s;
 }
 .score-chip.active{border-color:#a78bfa;background:rgba(108,99,255,.15)}
+.score-chip.clickable-pass{
+  cursor:pointer;border-color:rgba(245,158,11,.5);
+}
+.score-chip.clickable-pass:hover{
+  transform:scale(1.08);
+  box-shadow:0 4px 16px rgba(245,158,11,.3);
+  border-color:#f59e0b;
+}
+.lifeline-icons{
+  display:inline;margin-right:4px;
+  letter-spacing:2px;
+}
+.lifeline-icon{
+  cursor:default;
+  transition:transform .2s,opacity .2s;
+  display:inline-block;
+}
+.lifeline-icon.clickable{
+  cursor:pointer;
+}
+.lifeline-icon.clickable:hover{
+  transform:scale(1.3);
+  filter:drop-shadow(0 0 6px rgba(245,158,11,.6));
+}
+
+/* Timer */
+.timer-area{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  margin-bottom:16px;min-height:44px;
+}
+.timer-btn{
+  padding:8px 18px;border-radius:12px;border:none;
+  background:linear-gradient(135deg,#3b82f6,#06b6d4);
+  color:#fff;font-family:inherit;font-size:.95em;font-weight:700;
+  cursor:pointer;transition:transform .2s;
+}
+.timer-btn:hover{transform:scale(1.05)}
+.timer-display{
+  font-size:1.6em;font-weight:900;
+  font-variant-numeric:tabular-nums;
+  min-width:80px;text-align:center;
+}
+.timer-display.warning{color:#f59e0b;animation:pulseText 1s ease infinite}
+.timer-display.danger{color:#ef4444;animation:pulseText .5s ease infinite}
+
+/* Add player mid-game */
+.add-player-game{
+  display:flex;align-items:center;gap:8px;margin-bottom:16px;justify-content:center;
+}
+.add-player-game-btn{
+  padding:6px 16px;border-radius:10px;border:2px dashed rgba(108,99,255,.4);
+  background:transparent;color:#a78bfa;font-family:inherit;font-size:.9em;
+  cursor:pointer;transition:border-color .2s,color .2s;
+}
+.add-player-game-btn:hover{border-color:#a78bfa;color:#fff}
+.add-player-game input{
+  padding:8px 14px;border-radius:10px;border:1px solid rgba(108,99,255,.3);
+  background:rgba(26,25,40,.9);color:#f0eeff;font-family:inherit;font-size:.95em;
+  outline:none;width:150px;
+}
+.add-player-game input:focus{border-color:#a78bfa}
+.add-player-game .confirm-add-btn{
+  padding:6px 14px;border-radius:10px;border:none;
+  background:linear-gradient(135deg,#10b981,#34d399);
+  color:#fff;font-family:inherit;font-size:.9em;font-weight:700;
+  cursor:pointer;
+}
 
 /* Roulettes area */
 .roulettes{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin-bottom:30px}
@@ -110,7 +179,6 @@ body::before{
   display:flex;align-items:center;justify-content:center;
   clip-path:polygon(0 0, 100% 0, 100% 100%);
 }
-/* We'll draw segments with canvas instead */
 
 canvas.wheel-canvas{
   width:280px;height:280px;border-radius:50%;cursor:pointer;
@@ -175,6 +243,11 @@ canvas.wheel-canvas:hover{filter:brightness(1.05);cursor:pointer}
 .btn-wrong{background:linear-gradient(135deg,#ef4444,#f87171);color:#fff}
 .btn-pass{background:rgba(255,255,255,.1);color:rgba(240,238,255,.7);border:1px solid rgba(255,255,255,.15)}
 .btn-submit{background:linear-gradient(135deg,#6c63ff,#a78bfa);color:#fff}
+.btn-lifeline{background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff}
+
+.pass-hint{
+  color:rgba(240,238,255,.45);font-size:.85em;margin-top:10px;
+}
 
 /* Feedback messages */
 .feedback-msg{
@@ -221,6 +294,7 @@ canvas.wheel-canvas:hover{filter:brightness(1.05);cursor:pointer}
   .spin-btn{width:50px;height:50px;font-size:.65em}
   .result-display{font-size:1.3em}
   #setup h1{font-size:2em}
+  .timer-display{font-size:1.3em}
 }
 </style>
 </head>
@@ -247,8 +321,22 @@ canvas.wheel-canvas:hover{filter:brightness(1.05);cursor:pointer}
 <!-- ===== GAME SCREEN ===== -->
 <div id="game" class="screen">
   <div class="top-bar">
-    <div class="current-turn" id="turnDisplay"></div>
+    <div class="top-bar-right">
+      <div class="current-turn" id="turnDisplay"></div>
+      <button class="add-player-game-btn" id="addPlayerGameBtn" onclick="showAddPlayerMidGame()">+ הוסף שחקן</button>
+    </div>
     <div class="scoreboard" id="scoreboard"></div>
+  </div>
+
+  <div class="add-player-game" id="addPlayerMidGame" style="display:none">
+    <input type="text" id="midGamePlayerName" placeholder="שם השחקן החדש" maxlength="20">
+    <button class="confirm-add-btn" onclick="confirmAddPlayerMidGame()">הוסף ✓</button>
+    <button class="add-player-game-btn" onclick="hideAddPlayerMidGame()">ביטול</button>
+  </div>
+
+  <div class="timer-area" id="timerArea">
+    <button class="timer-btn" id="timerBtn" onclick="startTimer()">⏱️ הפעל שעון 2 דקות</button>
+    <div class="timer-display" id="timerDisplay" style="display:none"></div>
   </div>
 
   <div class="roulettes">
@@ -282,6 +370,7 @@ canvas.wheel-canvas:hover{filter:brightness(1.05);cursor:pointer}
       <div class="answer-buttons" id="answerButtons">
         <!-- buttons inserted dynamically -->
       </div>
+      <div class="pass-hint" id="passHint" style="display:none">💡 לחצו על שם של שחקן אחר כדי להעביר לו את השאלה</div>
     </div>
   </div>
 </div>
@@ -311,20 +400,21 @@ const answerDB = {
     'בלגיה','ברזיל','בוליביה','בולגריה','בחריין','בחרין','בנגלדש','בנגלאדש','בורקינה פאסו','בוטסוואנה','בלארוס','בנין','בוכרסט','בוכארסט',
     'באר שבע','בארשבע','באר-שבע','בית שמש','בית-שמש','בני ברק','בני-ברק','בת ים','בת-ים','ביתר עילית','ביתר עלית',
     'בנגקוק','ברלין','בודפשט','בודאפשט','ברצלונה','ביירות','בירות','בגדאד','בגדד','בוסטון','בלפסט','ברן','בייג\'ינג','ביגינג','ביג\'ינג',
-    'גרמניה','גאנה','גינאה','גינאה','גואטמלה','גווטמלה','גמביה','גאורגיה','גרינלנד','גיברלטר','גבעתיים','גבעתים','גדרה','גני תקווה','גני תקוה',
+    'גרמניה','גאנה','גינאה','גואטמלה','גווטמלה','גמביה','גאורגיה','גרינלנד','גיברלטר','גבעתיים','גבעתים','גדרה','גני תקווה','גני תקוה',
+    'גבעת שמואל','גיבעת שמואל',
     'דנמרק','דרום אפריקה','דובאי','דובי','דימונה','דלהי','דלי','דבלין','דמשק',
     'הודו','הולנד','הונגריה','הונדורס','האיטי','הרצליה','הרצלייה','הוד השרון','הלסינקי','האג','המבורג','הונולולו','הונג קונג','הוואנה','הואנה',
     'ונצואלה','וייטנאם','ויטנאם','ורשה','ונציה','וושינגטון','ושינגטון','ויינה','וינה',
     'זימבבואה','זימבבוה','זמביה','זנזיבר','זכרון יעקב','זכרון-יעקב','זאגרב','ז\'נבה','זנבה','ג\'נבה','גנבה',
     'חיפה','חולון','חדרה','חריש',
-    'טורקיה','טייוואן','טיוואן','טיוון','טנזניה','טוניסיה','טוניס','טבריה','טבריא','טירת כרמל','טירת הכרמל','טוקיו','טוקיו','טורונטו','טביליסי',
-    'יוון','יפן','ירדן','ימן','תימן','ירושלים','ירושליים','יפו','יבנה','יוקנעם','יוקנעם','ירוחם','יהוד',
+    'טורקיה','טייוואן','טיוואן','טיוון','טנזניה','טוניסיה','טוניס','טבריה','טבריא','טירת כרמל','טירת הכרמל','טוקיו','טורונטו','טביליסי',
+    'יוון','יפן','ירדן','ימן','תימן','ירושלים','ירושליים','יפו','יבנה','יוקנעם','ירוחם','יהוד',
     'כווית','כוית','כרתים','כפר סבא','כפר-סבא','כרמיאל','כרמיל','כפר יונה','כנרת','כלכתה','כלכותה',
     'לבנון','לוב','ליביה','ליבריה','לאוס','לטביה','ליטא','לוקסמבורג','לוד','לונדון','ליסבון','לימה','ליון','לאס וגאס','לאס ווגאס','ליברפול',
-    'מצרים','מרוקו','מרוקו','מקסיקו','מלזיה','מלייזיה','מונגוליה','מוזמביק','מלטה','מולדובה','מולדבה','מאוריטניה','מיאנמר','מלאווי','מלאוי','מאלי','מדגסקר','מונקו','מונאקו','מקדוניה',
+    'מצרים','מרוקו','מקסיקו','מלזיה','מלייזיה','מונגוליה','מוזמביק','מלטה','מולדובה','מולדבה','מאוריטניה','מיאנמר','מלאווי','מלאוי','מאלי','מדגסקר','מונקו','מונאקו','מקדוניה',
     'מודיעין','מודעין','מגדל העמק','מעלות','מעלה אדומים','מעלה-אדומים','מוסקבה','מוסקווה','מדריד','מילאנו','מילנו','מנצ\'סטר','מנצסטר','מלבורן','מומבאי','מומביי','מיאמי','מינכן','מנילה','מנילא','מינסק','מונטריאול','מונטריאל',
     'נורבגיה','נורווגיה','ניגריה','ניו זילנד','ניו-זילנד','ניו זלנד','ניקרגואה','נמיביה','נמביה','נפאל','ניז\'ר','ניגר','נתניה','נתניא','נצרת','נהריה','נהריא','נס ציונה','נס-ציונה','ניו יורק','ניו-יורק','ניורק','ניס',
-    'סין','סוריה','סודן','סומליה','ספרד','סנגל','סרביה','סלובניה','סלובקיה','סיירה לאונה','סרי לנקה','סרילנקה','סינגפור','סינגפר','סדרות','סטוקהולם','סטוקהולם','סידני','סידנ','סאו פאולו','סן פרנסיסקו','סן-פרנסיסקו',
+    'סין','סוריה','סודן','סומליה','ספרד','סנגל','סרביה','סלובניה','סלובקיה','סיירה לאונה','סרי לנקה','סרילנקה','סינגפור','סינגפר','סדרות','סטוקהולם','סידני','סאו פאולו','סן פרנסיסקו','סן-פרנסיסקו',
     'עיראק','עירק','עומאן','עכו','עפולה','עראבה','עמאן','עמן','עזה',
     'פולין','פרו','פנמה','פרגוואי','פרגואי','פקיסטן','פיליפינים','פילפינים','פינלנד','פורטוגל','פתח תקווה','פתח תקוה','פתח-תקווה','פתח-תקוה','פריז','פריס','פראג','פלורנס','פירנצה',
     'צרפת','צ\'כיה','צכיה','צ\'ילה','צילה','צ\'אד','צאד','צפת','ציריך','צירך','צוריך',
@@ -332,6 +422,7 @@ const answerDB = {
     'קריית שמונה','קרית שמונה','קריית גת','קרית גת','קריית אתא','קרית אתא','קריית ביאליק','קרית ביאליק','קריית מוצקין','קרית מוצקין','קהיר','קופנהגן','קופנהאגן','קייב','קיב','קיאב','קייפטאון','קיפטאון',
     'רוסיה','רומניה','רומניא','רואנדה','ראשון לציון','ראשון-לציון','רמת גן','רמת-גן','רמלה','רהט','רעננה','רענננה','רמת השרון','רמת-השרון','רומא','ריו דה ז\'ניירו','ריגה','ריאד',
     'שבדיה','שוויץ','שווייץ','שויץ','שויצריה','שוויצריה','שדרות','שפרעם','שנחאי','שנגחאי','שיקגו','שיקאגו',
+    'שוהם','שהם',
     'תאילנד','תאילאנד','תוניסיה','תל אביב','תל-אביב','תל אביב יפו','תל אביב-יפו'
   ],
   'ילד/ילדה': [
@@ -369,7 +460,7 @@ const answerDB = {
     'ורד','וורד',
     'זית','זרעים',
     'חציל','חבצלת','חיטה','חיטא','חרצית','חסה','חמנייה','חמניה','חבוש','חצב','חומוס',
-    'טבק','טולפ','טוליפ',
+    'טבק','טולפ','טוליפ','טימין','טרגון','טף','טמבלקוקוס','טיון דביק','טקומית','טופח','טחב',
     'יסמין','יסמן','יקינטון',
     'כותנה','כלנית','כרוב','כרפס','כרכום','כרישה','כוסברה',
     'לוטוס','לילך','לימון','לבונה','ליצ\'י','ליצי','לפת','לואיזה','לויזה','לבנדר',
@@ -378,7 +469,7 @@ const answerDB = {
     'סחלב','סלק','סיגלית','סלרי',
     'עגבנייה','עגבניה','ענב','ענבים','עץ',
     'פטרוזיליה','פטרוזליה','פטל','פיסטוק','פלפל','פפאיה','פפאיא','פפיה','פסיפלורה','פרג','פיטנגו','פומלה','פומלו','פטריה','פטריות',
-    'צבר','צנון','צנונית','ציפורן',
+    'צבר','צנון','צנונית','ציפורן','צבעוני',
     'קישוא','קישואה','קלמנטינה','קלמנטינא','קמומיל','קינמון','קקטוס','קוקוס',
     'רוזמרין','רוזמרן','רימון','רקפת','רוקט','רוקולה',
     'שום','שושנה','שושנא','שיזף','שעורה','שעורא','שסק','שקד','שזיף','שיבולת','שיח','שמיר',
@@ -411,7 +502,7 @@ const answerDB = {
   ]
 };
 
-// Build a Set for fast lookup (normalized: trimmed, no extra spaces)
+// Build a Set for fast lookup
 const answerSets = {};
 for (const cat in answerDB) {
   answerSets[cat] = new Set(answerDB[cat].map(a => a.trim()));
@@ -420,7 +511,9 @@ for (const cat in answerDB) {
 // ===== STATE =====
 let players = [];
 let scores = [];
+let lifelines = [];
 let currentPlayer = 0;
+let answeringPlayer = 0; // who is currently answering (may differ if question was passed)
 let selectedCategory = null;
 let selectedLetter = null;
 let catAngle = 0;
@@ -428,6 +521,9 @@ let letAngle = 0;
 let catSpinning = false;
 let letSpinning = false;
 let isSurprise = false;
+let timerInterval = null;
+let timerSeconds = 0;
+let questionActive = false; // true when answer area is showing
 
 // ===== SETUP =====
 function addPlayer() {
@@ -455,7 +551,9 @@ function startGame() {
   });
   if (players.length < 2) return;
   scores = players.map(() => 0);
+  lifelines = players.map(() => 3);
   currentPlayer = 0;
+  answeringPlayer = 0;
 
   document.getElementById('setup').classList.remove('active');
   document.getElementById('game').classList.add('active');
@@ -463,6 +561,77 @@ function startGame() {
   drawWheel('categoryWheel', categories, catColors);
   drawWheel('letterWheel', hebrewLetters, letterColors);
   updateUI();
+}
+
+// ===== ADD PLAYER MID-GAME =====
+function showAddPlayerMidGame() {
+  document.getElementById('addPlayerMidGame').style.display = 'flex';
+  document.getElementById('midGamePlayerName').focus();
+}
+
+function hideAddPlayerMidGame() {
+  document.getElementById('addPlayerMidGame').style.display = 'none';
+  document.getElementById('midGamePlayerName').value = '';
+}
+
+function confirmAddPlayerMidGame() {
+  const input = document.getElementById('midGamePlayerName');
+  const name = input.value.trim();
+  if (!name) { input.focus(); return; }
+  players.push(name);
+  scores.push(0);
+  lifelines.push(3);
+  hideAddPlayerMidGame();
+  updateUI();
+}
+
+// ===== TIMER =====
+function startTimer() {
+  if (timerInterval) return;
+  timerSeconds = 120;
+  const btn = document.getElementById('timerBtn');
+  const display = document.getElementById('timerDisplay');
+  btn.style.display = 'none';
+  display.style.display = 'inline-block';
+  updateTimerDisplay();
+
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    if (timerSeconds <= 0) {
+      stopTimer();
+      showFeedback(false, '⏰ נגמר הזמן!');
+    } else {
+      updateTimerDisplay();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const display = document.getElementById('timerDisplay');
+  const m = Math.floor(timerSeconds / 60);
+  const s = timerSeconds % 60;
+  display.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+  display.className = 'timer-display';
+  if (timerSeconds <= 15) display.classList.add('danger');
+  else if (timerSeconds <= 30) display.classList.add('warning');
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  timerSeconds = 0;
+}
+
+function resetTimerUI() {
+  stopTimer();
+  const btn = document.getElementById('timerBtn');
+  const display = document.getElementById('timerDisplay');
+  btn.style.display = 'inline-block';
+  display.style.display = 'none';
+  display.textContent = '';
+  display.className = 'timer-display';
 }
 
 // ===== DRAW WHEEL =====
@@ -479,7 +648,6 @@ function drawWheel(canvasId, items, colors) {
     const startAngle = i * arc - Math.PI / 2;
     const endAngle = startAngle + arc;
 
-    // segment
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.arc(cx, cy, r, startAngle, endAngle);
@@ -490,7 +658,6 @@ function drawWheel(canvasId, items, colors) {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // text
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(startAngle + arc / 2);
@@ -502,7 +669,6 @@ function drawWheel(canvasId, items, colors) {
     ctx.restore();
   }
 
-  // center circle
   ctx.beginPath();
   ctx.arc(cx, cy, 38, 0, 2 * Math.PI);
   ctx.fillStyle = '#1a1928';
@@ -524,12 +690,9 @@ function spinWheel(canvasId, items, currentAngle, callback) {
   canvas.style.transition = 'transform 4s cubic-bezier(0.17,0.67,0.12,0.99)';
   canvas.style.transform = `rotate(${newAngle}deg)`;
 
-  // figure out which segment the pointer (at top) lands on
   setTimeout(() => {
     const normalizedAngle = newAngle % 360;
     const segmentSize = 360 / n;
-    // pointer is at top (270 deg in math coords = 0 in visual)
-    // the wheel rotates clockwise, so segment at top:
     const idx = Math.floor(((360 - normalizedAngle % 360) % 360) / segmentSize);
     callback(items[idx], newAngle);
   }, 4200);
@@ -597,8 +760,12 @@ function showAnswerArea() {
   const inst = document.getElementById('resultInstruction');
   const btns = document.getElementById('answerButtons');
   const input = document.getElementById('answerInput');
+  const passHint = document.getElementById('passHint');
   area.style.display = 'block';
   input.value = '';
+  questionActive = true;
+  answeringPlayer = currentPlayer;
+  updateUI(); // refresh scoreboard to show clickable names
 
   if (isSurprise) {
     const q = surpriseQuestions[Math.floor(Math.random() * surpriseQuestions.length)];
@@ -606,19 +773,72 @@ function showAnswerArea() {
     input.placeholder = 'כתבו את התשובה שלכם...';
     btns.innerHTML = `
       <button class="btn btn-submit" onclick="submitSurprise()">✨ קבל תשובה</button>
+      <button class="btn btn-pass" onclick="passTurn()">⏭️ העבר תור</button>
     `;
+    passHint.style.display = 'block';
   } else {
     inst.textContent = `כתבו ${selectedCategory} שמתחיל/ה באות ${selectedLetter}`;
     input.placeholder = `${selectedCategory} באות ${selectedLetter}...`;
     btns.innerHTML = `
       <button class="btn btn-submit" onclick="checkAnswer()">🔍 בדוק תשובה</button>
+      <button class="btn btn-pass" onclick="passTurn()">⏭️ העבר תור</button>
     `;
+    passHint.style.display = 'block';
   }
   input.focus();
 }
 
+// ===== LIFELINE =====
+function useLifeline(playerIndex) {
+  if (lifelines[playerIndex] <= 0) return;
+  if (playerIndex !== answeringPlayer) return;
+  lifelines[playerIndex]--;
+  // Just remove one icon, keep the turn and question active
+  // The player can re-spin or continue answering
+  questionActive = false;
+  document.getElementById('answerArea').style.display = 'none';
+  document.getElementById('resultInstruction').innerHTML = '<div class="feedback-msg" style="color:#f59e0b">🛟 גלגל הצלה! סובבו שוב</div>';
+  document.getElementById('passHint').style.display = 'none';
+  selectedCategory = null;
+  selectedLetter = null;
+  isSurprise = false;
+  updateUI();
+  setTimeout(() => {
+    document.getElementById('resultInstruction').textContent = '';
+    updateResultDisplay();
+  }, 1500);
+}
+
+// ===== PASS TO ANOTHER PLAYER =====
+function passToPlayer(playerIndex) {
+  if (!questionActive) return;
+  if (playerIndex === answeringPlayer) return;
+  answeringPlayer = playerIndex;
+  const inst = document.getElementById('resultInstruction');
+  const btns = document.getElementById('answerButtons');
+  const input = document.getElementById('answerInput');
+  input.value = '';
+
+  if (isSurprise) {
+    inst.innerHTML = `<div class="surprise-question">🎉 שאלת הפתעה עברה ל${players[answeringPlayer]}!</div>`;
+    btns.innerHTML = `
+      <button class="btn btn-submit" onclick="submitSurprise()">✨ קבל תשובה</button>
+    `;
+  } else {
+    inst.innerHTML = `<span style="color:#f59e0b;font-weight:700">${players[answeringPlayer]}</span> — כתבו ${selectedCategory} שמתחיל/ה באות ${selectedLetter}`;
+    const lifelineBtn = lifelines[answeringPlayer] > 0
+      ? `<button class="btn btn-lifeline" onclick="useLifeline()">🛟 גלגל הצלה (${lifelines[answeringPlayer]})</button>`
+      : '';
+    btns.innerHTML = `
+      <button class="btn btn-submit" onclick="checkAnswer()">🔍 בדוק תשובה</button>
+      ${lifelineBtn}
+    `;
+  }
+  updateUI();
+  input.focus();
+}
+
 // ===== ANSWERS =====
-// Map final-form letters to their normal form for comparison
 const finalToNormal = {'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'};
 function normalizeHebrew(ch) {
   return finalToNormal[ch] || ch;
@@ -631,16 +851,14 @@ function checkAnswer() {
   const firstChar = normalizeHebrew(answer.charAt(0));
   const targetLetter = normalizeHebrew(selectedLetter);
 
-  // Check 1: first letter must match
   if (firstChar !== targetLetter) {
     showFeedback(false, `התשובה צריכה להתחיל באות ${selectedLetter}`);
     return;
   }
 
-  // Check 2: answer must be in the category database
   const set = answerSets[selectedCategory];
   if (set && set.has(answer)) {
-    scores[currentPlayer]++;
+    scores[answeringPlayer]++;
     showFeedback(true);
     fireConfetti();
     fireSmileyRain();
@@ -653,25 +871,36 @@ function showFeedback(isCorrect, detail) {
   const inst = document.getElementById('resultInstruction');
   const ansArea = document.getElementById('answerArea');
   ansArea.style.display = 'none';
+  questionActive = false;
+  document.getElementById('passHint').style.display = 'none';
+  stopTimer();
+
   if (isCorrect) {
-    inst.innerHTML = '<div class="feedback-msg correct">🎉 כל הכבוד! 🎉</div>';
+    const who = answeringPlayer !== currentPlayer ? ` (${players[answeringPlayer]})` : '';
+    inst.innerHTML = `<div class="feedback-msg correct">🎉 כל הכבוד${who}! 🎉</div>`;
   } else {
     const detailHtml = detail ? `<br><span style="font-size:.7em;color:rgba(240,238,255,.55)">${detail}</span>` : '';
     inst.innerHTML = `<div class="feedback-msg wrong">💪 לא נורא, כל יום לומדים דברים חדשים!${detailHtml}</div>`;
   }
+  updateUI();
   setTimeout(() => nextTurn(), 3000);
 }
 
 function submitSurprise() {
   const answer = document.getElementById('answerInput').value.trim();
   if (!answer) { document.getElementById('answerInput').focus(); return; }
-  scores[currentPlayer]++;
+  scores[answeringPlayer]++;
   showFeedback(true);
   fireConfetti();
   fireSmileyRain();
 }
 
 function passTurn() {
+  stopTimer();
+  questionActive = false;
+  document.getElementById('answerArea').style.display = 'none';
+  document.getElementById('passHint').style.display = 'none';
+  document.getElementById('resultInstruction').textContent = '';
   nextTurn();
 }
 
@@ -679,9 +908,13 @@ function nextTurn() {
   selectedCategory = null;
   selectedLetter = null;
   isSurprise = false;
+  questionActive = false;
   currentPlayer = (currentPlayer + 1) % players.length;
+  answeringPlayer = currentPlayer;
   document.getElementById('answerArea').style.display = 'none';
   document.getElementById('resultInstruction').textContent = '';
+  document.getElementById('passHint').style.display = 'none';
+  resetTimerUI();
   updateResultDisplay();
   updateUI();
 }
@@ -689,9 +922,29 @@ function nextTurn() {
 function updateUI() {
   document.getElementById('turnDisplay').textContent = `🎯 התור של: ${players[currentPlayer]}`;
   const sb = document.getElementById('scoreboard');
-  sb.innerHTML = players.map((p, i) =>
-    `<div class="score-chip ${i === currentPlayer ? 'active' : ''}">${p}: ${scores[i]}</div>`
-  ).join('');
+  sb.innerHTML = players.map((p, i) => {
+    const isActive = i === answeringPlayer;
+    const isClickablePass = questionActive && i !== answeringPlayer;
+    const classes = ['score-chip'];
+    if (isActive) classes.push('active');
+    if (isClickablePass) classes.push('clickable-pass');
+    const chipOnclick = isClickablePass ? `onclick="passToPlayer(${i})"` : '';
+
+    // Build lifeline icons - clickable only for current answering player when question is active
+    let lifelineHtml = '';
+    for (let j = 0; j < lifelines[i]; j++) {
+      if (i === answeringPlayer && questionActive) {
+        lifelineHtml += `<span class="lifeline-icon clickable" onclick="event.stopPropagation(); useLifeline(${i})" title="לחצו להשתמש בגלגל הצלה">🛟</span>`;
+      } else {
+        lifelineHtml += `<span class="lifeline-icon">🛟</span>`;
+      }
+    }
+
+    return `<div class="${classes.join(' ')}" ${chipOnclick}>
+      <span class="lifeline-icons">${lifelineHtml}</span>
+      ${p}: ${scores[i]}
+    </div>`;
+  }).join('');
 }
 
 // ===== CONFETTI =====
@@ -733,6 +986,13 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.getElementById('answerArea').style.display === 'block') {
     if (isSurprise) submitSurprise();
     else checkAnswer();
+  }
+});
+
+// Enter key for mid-game player add
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.activeElement === document.getElementById('midGamePlayerName')) {
+    confirmAddPlayerMidGame();
   }
 });
 </script>

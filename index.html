@@ -243,7 +243,6 @@ canvas.wheel-canvas:hover{filter:brightness(1.05);cursor:pointer}
 .btn-wrong{background:linear-gradient(135deg,#ef4444,#f87171);color:#fff}
 .btn-pass{background:rgba(255,255,255,.1);color:rgba(240,238,255,.7);border:1px solid rgba(255,255,255,.15)}
 .btn-submit{background:linear-gradient(135deg,#6c63ff,#a78bfa);color:#fff}
-.btn-lifeline{background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff}
 
 .pass-hint{
   color:rgba(240,238,255,.45);font-size:.85em;margin-top:10px;
@@ -826,12 +825,9 @@ function passToPlayer(playerIndex) {
     `;
   } else {
     inst.innerHTML = `<span style="color:#f59e0b;font-weight:700">${players[answeringPlayer]}</span> — כתבו ${selectedCategory} שמתחיל/ה באות ${selectedLetter}`;
-    const lifelineBtn = lifelines[answeringPlayer] > 0
-      ? `<button class="btn btn-lifeline" onclick="useLifeline()">🛟 גלגל הצלה (${lifelines[answeringPlayer]})</button>`
-      : '';
     btns.innerHTML = `
       <button class="btn btn-submit" onclick="checkAnswer()">🔍 בדוק תשובה</button>
-      ${lifelineBtn}
+      <button class="btn btn-pass" onclick="passTurn()">⏭️ העבר תור</button>
     `;
   }
   updateUI();

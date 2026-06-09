@@ -792,20 +792,8 @@ function useLifeline(playerIndex) {
   if (lifelines[playerIndex] <= 0) return;
   if (playerIndex !== answeringPlayer) return;
   lifelines[playerIndex]--;
-  // Just remove one icon, keep the turn and question active
-  // The player can re-spin or continue answering
-  questionActive = false;
-  document.getElementById('answerArea').style.display = 'none';
-  document.getElementById('resultInstruction').innerHTML = '<div class="feedback-msg" style="color:#f59e0b">🛟 גלגל הצלה! סובבו שוב</div>';
-  document.getElementById('passHint').style.display = 'none';
-  selectedCategory = null;
-  selectedLetter = null;
-  isSurprise = false;
+  // Only remove one icon - question stays, turn stays, player can answer or pass to a friend
   updateUI();
-  setTimeout(() => {
-    document.getElementById('resultInstruction').textContent = '';
-    updateResultDisplay();
-  }, 1500);
 }
 
 // ===== PASS TO ANOTHER PLAYER =====
